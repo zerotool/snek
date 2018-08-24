@@ -72,6 +72,22 @@ class BattlesController < ApplicationController
     ahoy.track('Visit Battle', {battle_id: @battle.id})
   end
 
+  def show_3d
+    @battle = Battle.find params[:id]
+    if @battle.finished?
+      @arena = @battle.arena
+      if user_signed_in?
+        @saved_battle = current_user.saved_battles.find_by(battle_id: @battle.id)
+      else
+        @saved_battle = nil
+      end
+      gon.rounds = @battle.battle_rounds.order(:id).map { |round| {sneks: round.sneks, number: round.round_number} }
+      gon.snek_names = Hash[@battle.battle_rounds.order(:id).first.sneks.map { |s| [ s['snek_id'], Snek.find(s['snek_id']).short_name] }]
+      gon.sneks = Hash[@battle.snek_battles.map { |sb| [sb.snek.id.to_s, { id: sb.snek.id, name: sb.snek.short_name, style: sb.snek.style_asset_urls}] }]
+    end
+    ahoy.track('Visit Battle', {battle_id: @battle.id})
+  end
+
   def image
     @battle = Battle.find params[:id]
     send_data BattleImage.new(@battle).for_facebook,

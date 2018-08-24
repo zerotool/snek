@@ -1,0 +1,18 @@
+- content_for :title, "#{battle_name(@battle)}: #{@battle.snek_battles.map { |sb| sb.snek.name }.join(', ')}"
+- content_for :og_image, image_battle_url(@battle, format: :png)
+
+.container
+  .row
+    .col
+      h1 = battle_name(@battle)
+
+  - if @battle.finished?
+    = render 'finished_3d'
+
+  - elsif @battle.running? || @battle.draft?
+    = render 'running'
+
+  - elsif @battle.failed?
+    = render 'failed'
+
+

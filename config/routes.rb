@@ -42,6 +42,7 @@ Rails.application.routes.draw do
   get 'welcome/rules'
   get 'welcome/long'
   get 'welcome/credits'
+  get 'battles/:id/show_3d', to: 'battles#show_3d'
 
   root 'welcome#index'
 end
