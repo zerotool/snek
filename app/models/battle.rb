@@ -59,7 +59,7 @@ class Battle < ApplicationRecord
 
     case mode
     when BattleMode::DEFAULT
-      sneks = Snek.for_autofight.where.not(id: initiator_snek_id).shuffle.take(3)
+      sneks = Snek.for_autofight.active.where.not(id: initiator_snek_id).shuffle.take(3)
       if sneks.count < 3
         sneks = sneks.take(1)
         update! mode: BattleMode::DUEL
@@ -119,7 +119,7 @@ class Battle < ApplicationRecord
         # Get possible direction for the snek
         # Try to catch https://rollbar.com/noff/snek/items/30/
         begin
-          move_direction = snek_position.get_next_move(current_arena)
+          (move_direction, pattern_index) = snek_position.get_next_move(current_arena)
         rescue NoMethodError => e
           Rollbar.error e,
                         snek_positions: snek_positions,
@@ -160,8 +160,9 @@ class Battle < ApplicationRecord
             raise Exception, 'Tries to move into body, head or self tail'
           end
 
-          # Tries to move into owns tail. It's ok, just pull the tail forward
-          if target_cell == "tail-#{snek_position.snek.id}"
+          # Tries to move into owns tail. It's ok if snek is longer than 2, so it doesn't "flip"
+          if target_cell == "tail-#{snek_position.snek.id}" && snek_position.position.length > 2
+            # just pull the tail forward
             snek_positions[snek_position_index].move(move_direction, false)
           end
 
