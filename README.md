@@ -16,6 +16,27 @@ Don't commit it to the repository.
 rails s
 ```
 
+## Run with Docker
+
+Local development stack:
+
+```bash
+docker compose up --build
+```
+
+It starts Rails, Sidekiq, Postgres, and Redis. The app is available on `http://localhost:3000`.
+
+## Server deploy with Docker
+
+Production stack files:
+
+- `Dockerfile.prod`
+- `docker-compose.server.yml`
+- `.env.server.example`
+- `infra/ansible/site.yml`
+
+To provision a server with Docker and deploy the stack through Ansible, follow [infra/ansible/README.md](infra/ansible/README.md).
+
 ## Development plan
 
 Here: https://github.com/noff/snek/projects/1 

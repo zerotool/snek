@@ -1,0 +1,27 @@
+snek_repo_url: https://github.com/zerotool/snek.git
+snek_repo_version: master
+snek_deploy_dir: /opt/snek
+
+snek_app_host: snek.example.com
+snek_http_port: 80
+snek_https_port: 443
+snek_force_ssl: true
+
+snek_postgres_db: snek_production
+snek_postgres_user: snek
+snek_postgres_password: change-me
+
+snek_secret_key_base: change-me
+snek_devise_secret_key: change-me
+snek_notification_email: ops@example.com
+
+snek_rollbar_env: production
+snek_rollbar_access_token: ""
+snek_rollbar_client_access_token: ""
+
+snek_stripe_private_key: ""
+snek_stripe_public_key: ""
+snek_stripe_webhook_secret: ""
+snek_stripe_product_pro_snek: ""
+
+snek_rails_master_key: ""

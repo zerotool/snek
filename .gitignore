@@ -29,6 +29,9 @@
 # Ignore master key for decrypting credentials and more.
 /config/master.key
 /config/database.yml
+/.env.server
+infra/ansible/inventory.ini
+infra/ansible/group_vars/all.yml
 
 .idea
 *.iml

@@ -8,7 +8,11 @@ Devise.setup do |config|
   # confirmation, reset password and unlock tokens in the database.
   # Devise will use the `secret_key_base` as its `secret_key`
   # by default. You can change it below and use your own secret key.
-  # config.secret_key = 'c32b5e3b8147bbfdf6fbc38ad8d874191519d54c6719718d48d41e3c9ba8ec3ee808c8124e8ddce106d8d139d21f21314886474494a906112d5466a1b5ec667c'
+  if ENV['DEVISE_SECRET_KEY'].present?
+    config.secret_key = ENV['DEVISE_SECRET_KEY']
+  elsif Rails.env.development? || Rails.env.test?
+    config.secret_key = 'docker-development-devise-secret-key-change-me'
+  end
   
   # ==> Controller configuration
   # Configure the parent class to the devise controllers.

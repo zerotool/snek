@@ -10,11 +10,18 @@ class BillingController < ApplicationController
   def webhook
     payload = request.body.read
     sig_header = request.env['HTTP_STRIPE_SIGNATURE']
+    webhook_secret = SnekConfig.env_or_credential('STRIPE_WEBHOOK_SECRET', :stripe, :webhook_secret)
+
+    if webhook_secret.blank?
+      head :service_unavailable
+      return
+    end
+
     event = nil
     begin
       event = Stripe::Webhook.construct_event payload,
                                               sig_header,
-                                              Rails.application.credentials.stripe[:webhook_secret]
+                                              webhook_secret
     rescue JSON::ParserError => e
       # Invalid payload
       Rails.logger.error e
@@ -30,7 +37,9 @@ class BillingController < ApplicationController
     end
 
     Rails.logger.warn event.inspect
-    NotifyMailer.with(event: event.inspect).stripe.deliver_now
+    if SnekConfig.env_or_credential('NOTIFICATION_EMAIL', :notification_email).present?
+      NotifyMailer.with(event: event.inspect).stripe.deliver_now
+    end
 
     if valid_event?(event)
 

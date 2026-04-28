@@ -2,9 +2,12 @@ Rollbar.configure do |config|
   # Without configuration, Rollbar is enabled in all environments.
   # To disable in specific environments, set config.enabled=false.
 
+  server_token = SnekConfig.env_or_credential('ROLLBAR_ACCESS_TOKEN', :rollbar, :server)
+  client_token = SnekConfig.env_or_credential('ROLLBAR_CLIENT_ACCESS_TOKEN', :rollbar, :client)
+
   # Need this to CI work
-  if Rails.env.production?
-    config.access_token = Rails.application.credentials.rollbar[:server]
+  if Rails.env.production? && server_token.present?
+    config.access_token = server_token
   end
 
   # Here we'll disable in 'test':
@@ -12,10 +15,10 @@ Rollbar.configure do |config|
     config.enabled = false
   end
 
-  if !Rails.env.test? && !Rails.env.development?
+  if !Rails.env.test? && !Rails.env.development? && client_token.present?
     config.js_enabled = true
     config.js_options = {
-        accessToken: Rails.application.credentials.rollbar[:client],
+        accessToken: client_token,
         captureUncaught: true,
         ignoredMessages: ["Cannot read property 'stamp' of undefined"],
         payload: {

@@ -13,11 +13,13 @@ class PaidSubscriptionsController < ApplicationController
 
     case product
     when 'pro_snek'
-      product_code = Rails.application.credentials.stripe[:product_pro_snek]
+      product_code = SnekConfig.env_or_credential('STRIPE_PRODUCT_PRO_SNEK', :stripe, :product_pro_snek)
       redirect_path = new_snek_path
     else
       raise Exception, "Product type #{product} is not supported"
     end
+
+    raise 'STRIPE_PRODUCT_PRO_SNEK is not configured' if product_code.blank?
 
     # Create stripe subscription
     plan_id = Stripe::Plan.list(product: product_code).first['id']

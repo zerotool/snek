@@ -1,15 +1,8 @@
 development:
-  url: postgresql://user:password@localhost/snek_development?pool=5&timeout=5000
+  url: <%= ENV.fetch('DATABASE_URL') { 'postgresql://stan@localhost:5433/snek?pool=5&timeout=5000' } %>
 
 test:
-  database: snek_test
-  host: localhost
-  adapter: postgresql
-  username: <%= ENV['PG_USER'] %>
-  password: <%= ENV['PG_PASSWORD'] %>
-  port: 5432
-  timeout: 5000
-  pool: 5
+  url: <%= ENV.fetch('TEST_DATABASE_URL') { 'postgresql://stan@localhost:5433/snek_test?pool=5&timeout=5000' } %>
 
 production:
   url: postgresql://user:password@localhost/snek_production?pool=5&timeout=5000

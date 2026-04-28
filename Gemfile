@@ -1,7 +1,7 @@
 source 'https://rubygems.org'
 git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 
-ruby '2.3.1'
+ruby '2.7.5'
 
 gem 'coffee-script', '~> 2.4', '>= 2.4.1'
 
@@ -16,7 +16,7 @@ gem 'draper'
 gem 'gon', '~> 6.2.0'
 gem 'jbuilder', '~> 2.5'
 gem 'jquery-rails'
-gem 'oj', '~> 2.16.1'
+gem 'oj', '~> 3.13', '>= 3.13.23'
 gem 'pg'
 gem 'puma'
 gem 'pundit'

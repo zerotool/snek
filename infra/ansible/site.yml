@@ -1,0 +1,96 @@
+---
+- name: Deploy snek with Docker Compose
+  hosts: snek
+  become: true
+  vars:
+    docker_apt_repo: >-
+      deb [arch={{ ansible_architecture | replace('x86_64', 'amd64') | replace('aarch64', 'arm64') }}
+      signed-by=/etc/apt/keyrings/docker.gpg]
+      https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable
+
+  tasks:
+    - name: Install base packages
+      ansible.builtin.apt:
+        name:
+          - ca-certificates
+          - curl
+          - git
+          - gnupg
+        state: present
+        update_cache: true
+
+    - name: Create apt keyrings directory
+      ansible.builtin.file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: "0755"
+
+    - name: Install Docker apt key
+      ansible.builtin.shell: |
+        set -euo pipefail
+        curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+        chmod a+r /etc/apt/keyrings/docker.gpg
+      args:
+        creates: /etc/apt/keyrings/docker.gpg
+
+    - name: Configure Docker apt repository
+      ansible.builtin.copy:
+        dest: /etc/apt/sources.list.d/docker.list
+        content: "{{ docker_apt_repo }}\n"
+        mode: "0644"
+
+    - name: Install Docker packages
+      ansible.builtin.apt:
+        name:
+          - containerd.io
+          - docker-buildx-plugin
+          - docker-ce
+          - docker-ce-cli
+          - docker-compose-plugin
+        state: present
+        update_cache: true
+
+    - name: Ensure Docker service is running
+      ansible.builtin.service:
+        name: docker
+        enabled: true
+        state: started
+
+    - name: Create deploy directory
+      ansible.builtin.file:
+        path: "{{ snek_deploy_dir }}"
+        state: directory
+        mode: "0755"
+
+    - name: Sync repository
+      ansible.builtin.git:
+        repo: "{{ snek_repo_url }}"
+        dest: "{{ snek_deploy_dir }}"
+        version: "{{ snek_repo_version }}"
+        force: true
+
+    - name: Render server environment file
+      ansible.builtin.template:
+        src: templates/env.server.j2
+        dest: "{{ snek_deploy_dir }}/.env.server"
+        mode: "0600"
+
+    - name: Start stateful services
+      ansible.builtin.command:
+        cmd: docker compose --env-file .env.server -f docker-compose.server.yml up -d db redis
+        chdir: "{{ snek_deploy_dir }}"
+
+    - name: Build application images
+      ansible.builtin.command:
+        cmd: docker compose --env-file .env.server -f docker-compose.server.yml build web sidekiq
+        chdir: "{{ snek_deploy_dir }}"
+
+    - name: Create and migrate database
+      ansible.builtin.command:
+        cmd: docker compose --env-file .env.server -f docker-compose.server.yml run --rm web bundle exec rails db:create db:migrate
+        chdir: "{{ snek_deploy_dir }}"
+
+    - name: Start application stack
+      ansible.builtin.command:
+        cmd: docker compose --env-file .env.server -f docker-compose.server.yml up -d --remove-orphans
+        chdir: "{{ snek_deploy_dir }}"

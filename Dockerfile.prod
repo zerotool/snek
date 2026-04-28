@@ -1,0 +1,42 @@
+FROM ruby:2.7.5-bullseye AS base
+
+ENV APP_HOME=/app \
+    BUNDLE_JOBS=4 \
+    BUNDLE_RETRY=3
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    git \
+    imagemagick \
+    libmagickwand-dev \
+    libpq-dev \
+    nodejs \
+    pkg-config \
+    postgresql-client \
+  && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+RUN gem install bundler -v 2.0.1
+
+COPY Gemfile Gemfile.lock .ruby-version package.json ./
+
+RUN bundle config set without 'development test' \
+  && bundle _2.0.1_ install
+
+COPY . .
+
+ENV RAILS_ENV=production \
+    RAILS_LOG_TO_STDOUT=1 \
+    RAILS_SERVE_STATIC_FILES=1 \
+    SECRET_KEY_BASE=docker-build-secret-key-base \
+    DEVISE_SECRET_KEY=docker-build-devise-secret-key \
+    APP_HOST=localhost \
+    DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:5432/snek_production?pool=5&timeout=5000 \
+    REDIS_URL=redis://127.0.0.1:6379/1 \
+    BOOTSNAP_CACHE_DIR=/tmp/bootsnap-cache
+
+RUN mkdir -p /tmp/bootsnap-cache /app/tmp/pids /app/storage \
+  && bundle exec rake assets:precompile
+
+ENTRYPOINT ["bin/docker-entrypoint"]

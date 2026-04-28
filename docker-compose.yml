@@ -1,0 +1,58 @@
+services:
+  db:
+    image: postgres:13
+    environment:
+      POSTGRES_DB: snek
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:6-alpine
+    ports:
+      - "6379:6379"
+
+  web:
+    build: .
+    depends_on:
+      - db
+      - redis
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/snek?pool=5&timeout=5000
+      TEST_DATABASE_URL: postgresql://postgres:postgres@db:5432/snek_test?pool=5&timeout=5000
+      REDIS_URL: redis://redis:6379/1
+      RAILS_ENV: development
+      ROLLBAR_ENV: development
+      SECRET_KEY_BASE: docker-development-secret-key-base-change-me
+      DEVISE_SECRET_KEY: docker-development-devise-secret-key-change-me
+      BOOTSNAP_CACHE_DIR: /tmp/bootsnap-cache
+      PORT: 3000
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+    command: bin/docker-web
+
+  sidekiq:
+    build: .
+    depends_on:
+      - db
+      - redis
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/snek?pool=5&timeout=5000
+      TEST_DATABASE_URL: postgresql://postgres:postgres@db:5432/snek_test?pool=5&timeout=5000
+      REDIS_URL: redis://redis:6379/1
+      RAILS_ENV: development
+      ROLLBAR_ENV: development
+      SECRET_KEY_BASE: docker-development-secret-key-base-change-me
+      DEVISE_SECRET_KEY: docker-development-devise-secret-key-change-me
+      BOOTSNAP_CACHE_DIR: /tmp/bootsnap-cache
+    volumes:
+      - .:/app
+    command: bin/docker-sidekiq
+
+volumes:
+  postgres_data:

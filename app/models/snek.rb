@@ -81,10 +81,17 @@ class Snek < ApplicationRecord
   # Set snek country
   def set_country_if_not_set
     if country.nil? && !user.current_sign_in_ip.nil?
-      geo_db = MaxMindDB.new('./vendor/GeoLite2-City.mmdb')
-      country = geo_db.lookup(user.current_sign_in_ip.to_s).country.name
-      if country
-        update country: country
+      geo_db_path = Rails.root.join('vendor', 'GeoLite2-City.mmdb')
+      return unless File.exist?(geo_db_path)
+
+      begin
+        geo_db = MaxMindDB.new(geo_db_path.to_s)
+        country = geo_db.lookup(user.current_sign_in_ip.to_s).country.name
+        if country
+          update country: country
+        end
+      rescue StandardError => e
+        Rails.logger.warn("GeoIP lookup skipped: #{e.class}: #{e.message}")
       end
     end
   end

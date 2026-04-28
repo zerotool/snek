@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+mkdir -p /app/tmp/pids
+mkdir -p "${BOOTSNAP_CACHE_DIR:-/tmp/bootsnap-cache}"
+
+rm -f /app/tmp/pids/server.pid
+
+if [ ! -f /app/config/database.yml ] && [ -f /app/config/database.yml.example ]; then
+  cp /app/config/database.yml.example /app/config/database.yml
+fi
+
+if [ -n "${DATABASE_URL:-}" ]; then
+  until ruby -rpg -ruri -e '
+    uri = URI(ENV.fetch("DATABASE_URL"))
+    PG.connect(
+      host: uri.host,
+      port: uri.port,
+      dbname: uri.path.sub(%r{^/}, ""),
+      user: uri.user,
+      password: uri.password
+    ).close
+  ' >/dev/null 2>&1; do
+    sleep 1
+  done
+fi
+
+exec "$@"

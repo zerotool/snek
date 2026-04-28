@@ -18,7 +18,7 @@ ActiveAdmin.register Snek do
   end
 
   filter :name
-  filter :user, as: :select, collection: User.order(email: :asc)
+  filter :user, as: :select, collection: proc { User.order(email: :asc) }
 
   form do |f|
     f.inputs do
